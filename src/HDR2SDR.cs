@@ -453,19 +453,18 @@ namespace Hdr2Sdr
         private CheckBox chkOverwrite;
         private CheckBox chkForce;
         private CheckBox chkOpenDone;
-        private RButton btnStart;
-        private RButton btnStop;
-        private RButton btnOpenOut;
-        private RButton btnAddFiles;
-        private RButton btnAddFolder;
-        private RButton btnRemove;
-        private RButton btnClear;
-        private RButton btnBrowseOut;
-        private RButton btnFfmpeg;
-        private MProgress bar;
+        private Button btnStart;
+        private Button btnStop;
+        private Button btnOpenOut;
+        private Button btnAddFiles;
+        private Button btnAddFolder;
+        private Button btnRemove;
+        private Button btnClear;
+        private Button btnBrowseOut;
+        private Button btnFfmpeg;
+        private ProgressBar bar;
         private Label lblStatus;
         private Label lblFfmpeg;
-        private Label lblTitle;
 
         private readonly HashSet<string> _seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private Thread _worker;
@@ -476,7 +475,6 @@ namespace Hdr2Sdr
 
         public MainForm(string[] args)
         {
-            Mdc.ApplyDark(IsSystemDark());
             _startArgs = args;
             BuildUi();
             this.Load += delegate
@@ -486,126 +484,76 @@ namespace Hdr2Sdr
             };
         }
 
-        // 读 Windows 注册表检测系统深色模式
-        private static bool IsSystemDark()
-        {
-            try
-            {
-                object v = Microsoft.Win32.Registry.GetValue(
-                    @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize",
-                    "AppsUseLightTheme", 1);
-                int i;
-                return int.TryParse(v.ToString(), out i) ? i == 0 : false;
-            }
-            catch { return false; }
-        }
-
-        // ---------------------------------------------------------- 界面 (Material Design 3)
+        // ---------------------------------------------------------- 界面
         private void BuildUi()
         {
             this.Text = "HDR 转 SDR";
-            this.Font = new Font("Microsoft YaHei UI", 9.5f);
+            this.Font = new Font("Microsoft YaHei UI", 9f);
             this.AutoScaleMode = AutoScaleMode.Font;
-            this.ClientSize = new Size(1080, 760);
-            this.MinimumSize = new Size(1000, 680);
+            this.ClientSize = new Size(1060, 730);
+            this.MinimumSize = new Size(980, 640);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.AllowDrop = true;
-            this.BackColor = Mdc.Surface;
 
-            // ---- 顶部 AppBar (紫色)
-            AppBar appbar = new AppBar();
-            appbar.Dock = DockStyle.Top;
-            this.Controls.Add(appbar);
+            TableLayoutPanel root = new TableLayoutPanel();
+            root.Dock = DockStyle.Fill;
+            root.ColumnCount = 1;
+            root.RowCount = 5;
+            root.Padding = new Padding(8);
+            root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 42f));
+            root.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 96f));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 86f));
+            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 132f));
+            this.Controls.Add(root);
 
-            lblTitle = new Label();
-            lblTitle.Text = "HDR · 转 SDR";
-            lblTitle.ForeColor = Mdc.OnSurface;
-            lblTitle.Font = new Font("Microsoft YaHei UI", 13f, FontStyle.Bold);
-            lblTitle.AutoSize = true;
-            lblTitle.Location = new Point(18, 16);
-            lblTitle.Height = 28;
-            appbar.Controls.Add(lblTitle);
+            // ---- 工具栏
+            Panel bar1 = new Panel();
+            bar1.Dock = DockStyle.Fill;
+            root.Controls.Add(bar1, 0, 0);
 
-            Label lblSub = new Label();
-            lblSub.Text = "录屏 HDR10 / HLG → 剪映可用的 SDR";
-            lblSub.ForeColor = Mdc.OnSurfaceVariant;
-            lblSub.Font = new Font("Microsoft YaHei UI", 8.5f);
-            lblSub.AutoSize = true;
-            lblSub.Location = new Point(150, 21);
-            lblSub.Height = 24;
-            appbar.Controls.Add(lblSub);
-
-            // ---- 主内容区 (可滚动)
-            Panel body = new Panel();
-            body.Dock = DockStyle.Fill;
-            body.BackColor = Mdc.Surface;
-            body.Padding = new Padding(16);
-            this.Controls.Add(body);
-            this.Controls.SetChildIndex(body, 0);
-
-            #region 工具栏卡片
-            CardPanel toolCard = new CardPanel();
-            toolCard.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            toolCard.Location = new Point(16, 16);
-            toolCard.Size = new Size(body.ClientSize.Width - 32, 58);
-            toolCard.Variant = CardVariant.Elevated;
-            toolCard.CornerRadius = 14;
-
-            btnAddFiles = MakeRButton("＋  添加文件", BtnVariant.Filled);
-            btnAddFiles.Location = new Point(16, 10);
+            btnAddFiles = MakeButton("添加文件", 96);
+            btnAddFiles.Location = new Point(0, 4);
             btnAddFiles.Click += delegate { PickFiles(); };
-            toolCard.Controls.Add(btnAddFiles);
+            bar1.Controls.Add(btnAddFiles);
 
-            btnAddFolder = MakeRButton("＋  文件夹", BtnVariant.Tonal);
-            btnAddFolder.Location = new Point(118, 10);
+            btnAddFolder = MakeButton("添加文件夹", 104);
+            btnAddFolder.Location = new Point(104, 4);
             btnAddFolder.Click += delegate { PickFolder(); };
-            toolCard.Controls.Add(btnAddFolder);
+            bar1.Controls.Add(btnAddFolder);
 
-            btnRemove = MakeRButton("移除所选", BtnVariant.Tonal);
-            btnRemove.Location = new Point(210, 10);
+            btnRemove = MakeButton("移除所选", 96);
+            btnRemove.Location = new Point(216, 4);
             btnRemove.Click += delegate { RemoveSelected(); };
-            toolCard.Controls.Add(btnRemove);
+            bar1.Controls.Add(btnRemove);
 
-            btnClear = MakeRButton("清空", BtnVariant.Text);
-            btnClear.Location = new Point(302, 10);
+            btnClear = MakeButton("清空", 72);
+            btnClear.Location = new Point(320, 4);
             btnClear.Click += delegate { ClearAll(); };
-            toolCard.Controls.Add(btnClear);
+            bar1.Controls.Add(btnClear);
 
             Label tip = new Label();
-            tip.Text = "把视频直接拖进窗口即可";
+            tip.Text = "把视频直接拖进窗口也可以";
             tip.AutoSize = true;
-            tip.ForeColor = Mdc.OnSurfaceVariant;
-            tip.Location = new Point(380, 20);
-            toolCard.Controls.Add(tip);
-            body.Controls.Add(toolCard);
-            #endregion
+            tip.ForeColor = Color.Gray;
+            tip.Location = new Point(404, 12);
+            bar1.Controls.Add(tip);
 
-            #region 文件列表卡片
-            CardPanel listCard = new CardPanel();
-            listCard.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            listCard.Location = new Point(16, 84);
-            listCard.Size = new Size(body.ClientSize.Width - 32, body.ClientSize.Height - 84 - 230);
-            listCard.Variant = CardVariant.Elevated;
-            listCard.CornerRadius = 14;
-
+            // ---- 列表
             lv = new BufferedListView();
             lv.Dock = DockStyle.Fill;
             lv.View = View.Details;
             lv.FullRowSelect = true;
-            lv.GridLines = false;
-            lv.BorderStyle = BorderStyle.None;
+            lv.GridLines = true;
             lv.HideSelection = false;
             lv.AllowDrop = true;
-            lv.BackColor = Mdc.Surface;
-            lv.ForeColor = Mdc.OnSurface;
-            lv.Font = new Font("Microsoft YaHei UI", 9f);
-            lv.Margin = new Padding(1);
-            lv.Columns.Add("文件", 370);
-            lv.Columns.Add("状态", 90);
-            lv.Columns.Add("分辨率", 100);
+            lv.Columns.Add("文件", 380);
+            lv.Columns.Add("状态", 92);
+            lv.Columns.Add("分辨率", 104);
             lv.Columns.Add("色彩", 210);
-            lv.Columns.Add("时长", 70);
-            lv.Columns.Add("大小", 84);
+            lv.Columns.Add("时长", 72);
+            lv.Columns.Add("大小", 86);
             lv.DoubleClick += delegate { OpenSelectedFolder(); };
             lv.KeyDown += delegate(object s, KeyEventArgs e)
             {
@@ -613,239 +561,160 @@ namespace Hdr2Sdr
             };
             lv.DragEnter += OnDragEnter;
             lv.DragDrop += OnDragDrop;
-            listCard.Controls.Add(lv);
-            body.Controls.Add(listCard);
-            #endregion
+            root.Controls.Add(lv, 0, 1);
 
-            #region 设置卡片
-            CardPanel setCard = new CardPanel();
-            setCard.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            setCard.Location = new Point(16, body.ClientSize.Height - 220);
-            setCard.Size = new Size(body.ClientSize.Width - 32, 204);
-            setCard.Variant = CardVariant.Elevated;
-            setCard.CornerRadius = 14;
+            // ---- 设置
+            GroupBox gb = new GroupBox();
+            gb.Text = "转换设置";
+            gb.Dock = DockStyle.Fill;
+            root.Controls.Add(gb, 0, 2);
 
-            Label sTitle = new Label();
-            sTitle.Text = "转换设置";
-            sTitle.ForeColor = Mdc.OnSurface;
-            sTitle.Font = new Font("Microsoft YaHei UI", 10f, FontStyle.Bold);
-            sTitle.AutoSize = true;
-            sTitle.Location = new Point(16, 10);
-            setCard.Controls.Add(sTitle);
-
-            Label l1 = MakeLabel("质量 CRF", 16, 42);
-            l1.ForeColor = Mdc.OnSurfaceVariant;
-            setCard.Controls.Add(l1);
+            Label l1 = MakeLabel("质量 CRF", 14, 27);
+            gb.Controls.Add(l1);
             numCrf = new NumericUpDown();
             numCrf.Minimum = 10;
             numCrf.Maximum = 32;
             numCrf.Value = 18;
-            numCrf.Location = new Point(82, 39);
+            numCrf.Location = new Point(80, 24);
             numCrf.Width = 58;
-            numCrf.BackColor = Mdc.Surface;
-            numCrf.ForeColor = Mdc.OnSurface;
-            setCard.Controls.Add(numCrf);
+            gb.Controls.Add(numCrf);
 
-            Label l2 = MakeLabel("速度", 156, 42);
-            l2.ForeColor = Mdc.OnSurfaceVariant;
-            setCard.Controls.Add(l2);
+            Label l2 = MakeLabel("速度", 152, 27);
+            gb.Controls.Add(l2);
             cbPreset = new ComboBox();
             cbPreset.DropDownStyle = ComboBoxStyle.DropDownList;
             cbPreset.Items.AddRange(new object[] { "ultrafast", "veryfast", "fast", "medium", "slow" });
             cbPreset.SelectedIndex = 3;
-            cbPreset.Location = new Point(196, 39);
+            cbPreset.Location = new Point(190, 24);
             cbPreset.Width = 100;
-            cbPreset.BackColor = Mdc.Surface;
-            cbPreset.ForeColor = Mdc.OnSurface;
-            setCard.Controls.Add(cbPreset);
+            gb.Controls.Add(cbPreset);
 
-            Label l3 = MakeLabel("编码器", 312, 42);
-            l3.ForeColor = Mdc.OnSurfaceVariant;
-            setCard.Controls.Add(l3);
+            Label l3 = MakeLabel("编码器", 304, 27);
+            gb.Controls.Add(l3);
             cbEncoder = new ComboBox();
             cbEncoder.DropDownStyle = ComboBoxStyle.DropDownList;
-            cbEncoder.Items.AddRange(new object[] { "x264（CPU）", "NVENC（N卡）" });
+            cbEncoder.Items.AddRange(new object[] { "x264（CPU，兼容最好）", "NVENC（N卡硬件，快）" });
             cbEncoder.SelectedIndex = 0;
-            cbEncoder.Location = new Point(360, 39);
-            cbEncoder.Width = 150;
-            cbEncoder.BackColor = Mdc.Surface;
-            cbEncoder.ForeColor = Mdc.OnSurface;
-            setCard.Controls.Add(cbEncoder);
+            cbEncoder.Location = new Point(352, 24);
+            cbEncoder.Width = 190;
+            gb.Controls.Add(cbEncoder);
 
             chkStrip = new CheckBox();
             chkStrip.Text = "清除 HDR 元数据";
             chkStrip.Checked = true;
-            chkStrip.ForeColor = Mdc.OnSurface;
             chkStrip.AutoSize = true;
-            chkStrip.Location = new Point(540, 42);
-            setCard.Controls.Add(chkStrip);
+            chkStrip.Location = new Point(560, 26);
+            gb.Controls.Add(chkStrip);
 
             chkOverwrite = new CheckBox();
             chkOverwrite.Text = "覆盖已有";
-            chkOverwrite.ForeColor = Mdc.OnSurface;
             chkOverwrite.AutoSize = true;
-            chkOverwrite.Location = new Point(690, 42);
-            setCard.Controls.Add(chkOverwrite);
+            chkOverwrite.Location = new Point(712, 26);
+            gb.Controls.Add(chkOverwrite);
 
             chkForce = new CheckBox();
             chkForce.Text = "强制非 HDR";
-            chkForce.ForeColor = Mdc.OnSurface;
             chkForce.AutoSize = true;
-            chkForce.Location = new Point(800, 42);
-            setCard.Controls.Add(chkForce);
+            chkForce.Location = new Point(812, 26);
+            gb.Controls.Add(chkForce);
 
-            Label l4 = MakeLabel("输出目录", 16, 80);
-            l4.ForeColor = Mdc.OnSurfaceVariant;
-            setCard.Controls.Add(l4);
+            Label l4 = MakeLabel("输出目录", 14, 60);
+            gb.Controls.Add(l4);
             txtOutDir = new TextBox();
-            txtOutDir.Location = new Point(82, 77);
+            txtOutDir.Location = new Point(80, 57);
             txtOutDir.Width = 700;
-            txtOutDir.BackColor = Mdc.Surface;
-            txtOutDir.ForeColor = Mdc.OnSurface;
             txtOutDir.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            setCard.Controls.Add(txtOutDir);
+            gb.Controls.Add(txtOutDir);
 
-            btnBrowseOut = MakeRButton("浏览", BtnVariant.Tonal);
-            btnBrowseOut.Location = new Point(1120, 74);
+            btnBrowseOut = MakeButton("浏览…", 78);
+            btnBrowseOut.Location = new Point(788, 55);
             btnBrowseOut.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             btnBrowseOut.Click += delegate { PickOutDir(); };
-            setCard.Controls.Add(btnBrowseOut);
-            body.Controls.Add(setCard);
-            #endregion
+            gb.Controls.Add(btnBrowseOut);
 
-            #region 执行卡片 (底部固定)
-            CardPanel actCard = new CardPanel();
-            actCard.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            actCard.Location = new Point(16, body.ClientSize.Height - 140);
-            actCard.Size = new Size(body.ClientSize.Width - 32, 124);
-            actCard.Variant = CardVariant.Elevated;
-            actCard.CornerRadius = 14;
+            Label hint = MakeLabel("（留空 = 输出到源文件旁边，命名 <原名>_SDR.mp4）", 872, 60);
+            hint.ForeColor = Color.Gray;
+            hint.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            gb.Controls.Add(hint);
 
-            btnStart = MakeRButton("开始转换", BtnVariant.Filled);
-            btnStart.Location = new Point(16, 16);
-            btnStart.Width = 200;
-            btnStart.Height = 46;
-            btnStart.Font = new Font("Microsoft YaHei UI", 11f, FontStyle.Bold);
+            // ---- 执行
+            Panel bar2 = new Panel();
+            bar2.Dock = DockStyle.Fill;
+            root.Controls.Add(bar2, 0, 3);
+
+            btnStart = MakeButton("开始转换", 132);
+            btnStart.Font = new Font(this.Font, FontStyle.Bold);
+            btnStart.Location = new Point(0, 4);
+            btnStart.Height = 34;
+            btnStart.BackColor = Color.FromArgb(232, 246, 233);
             btnStart.Click += delegate { StartConvert(); };
-            actCard.Controls.Add(btnStart);
+            bar2.Controls.Add(btnStart);
 
-            btnStop = MakeRButton("停止", BtnVariant.Tonal);
-            btnStop.Location = new Point(230, 16);
-            btnStop.Width = 90;
-            btnStop.Height = 46;
+            btnStop = MakeButton("停止", 84);
+            btnStop.Location = new Point(140, 4);
+            btnStop.Height = 34;
             btnStop.Enabled = false;
             btnStop.Click += delegate { StopConvert(); };
-            actCard.Controls.Add(btnStop);
+            bar2.Controls.Add(btnStop);
 
-            btnOpenOut = MakeRButton("打开输出", BtnVariant.Tonal);
-            btnOpenOut.Location = new Point(334, 16);
-            btnOpenOut.Height = 46;
+            btnOpenOut = MakeButton("打开输出目录", 116);
+            btnOpenOut.Location = new Point(232, 4);
+            btnOpenOut.Height = 34;
             btnOpenOut.Click += delegate { OpenOutputFolder(); };
-            actCard.Controls.Add(btnOpenOut);
+            bar2.Controls.Add(btnOpenOut);
 
-            btnFfmpeg = MakeRButton("ffmpeg…", BtnVariant.Text);
-            btnFfmpeg.Location = new Point(452, 16);
-            btnFfmpeg.Height = 46;
+            btnFfmpeg = MakeButton("指定 ffmpeg…", 112);
+            btnFfmpeg.Location = new Point(356, 4);
+            btnFfmpeg.Height = 34;
             btnFfmpeg.Click += delegate { PickFfmpeg(); };
-            actCard.Controls.Add(btnFfmpeg);
+            bar2.Controls.Add(btnFfmpeg);
 
             chkOpenDone = new CheckBox();
             chkOpenDone.Text = "完成后打开目录";
-            chkOpenDone.ForeColor = Mdc.OnSurface;
             chkOpenDone.AutoSize = true;
-            chkOpenDone.Location = new Point(560, 30);
-            actCard.Controls.Add(chkOpenDone);
+            chkOpenDone.Location = new Point(486, 12);
+            bar2.Controls.Add(chkOpenDone);
 
-            bar = new MProgress();
-            bar.Location = new Point(16, 84);
-            bar.Width = 1140;
-            bar.Height = 8;
+            bar = new ProgressBar();
+            bar.Location = new Point(0, 48);
+            bar.Width = 900;
+            bar.Height = 16;
             bar.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            actCard.Controls.Add(bar);
+            bar2.Controls.Add(bar);
 
             lblStatus = new Label();
             lblStatus.Text = "就绪";
             lblStatus.AutoSize = true;
-            lblStatus.ForeColor = Mdc.OnSurfaceVariant;
-            lblStatus.Location = new Point(16, 98);
-            actCard.Controls.Add(lblStatus);
+            lblStatus.Location = new Point(0, 68);
+            bar2.Controls.Add(lblStatus);
 
             lblFfmpeg = new Label();
             lblFfmpeg.Text = "";
             lblFfmpeg.AutoSize = true;
-            lblFfmpeg.ForeColor = Mdc.OnSurfaceVariant;
+            lblFfmpeg.ForeColor = Color.Gray;
             lblFfmpeg.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            lblFfmpeg.Location = new Point(600, 98);
-            actCard.Controls.Add(lblFfmpeg);
-            body.Controls.Add(actCard);
-            #endregion
+            lblFfmpeg.Location = new Point(520, 68);
+            bar2.Controls.Add(lblFfmpeg);
 
-            #region 日志卡片
-            CardPanel logCard = new CardPanel();
-            logCard.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            logCard.Variant = CardVariant.Elevated;
-            logCard.CornerRadius = 14;
+            // ---- 日志
+            GroupBox gl = new GroupBox();
+            gl.Text = "日志";
+            gl.Dock = DockStyle.Fill;
+            root.Controls.Add(gl, 0, 4);
 
             txtLog = new RichTextBox();
-            txtLog.Location = new Point(14, 12);
+            txtLog.Dock = DockStyle.Fill;
             txtLog.ReadOnly = true;
-            txtLog.BackColor = Mdc.Surface;
+            txtLog.BackColor = Color.White;
             txtLog.BorderStyle = BorderStyle.None;
             txtLog.Font = new Font("Consolas", 9f);
             txtLog.WordWrap = false;
             txtLog.HideSelection = false;
-            logCard.Controls.Add(txtLog);
-            body.Controls.Add(logCard);
-            #endregion
-
-            this.Resize += delegate { LayoutCards(body, toolCard, listCard, setCard, actCard, logCard); };
-            LayoutCards(body, toolCard, listCard, setCard, actCard, logCard);
+            gl.Controls.Add(txtLog);
 
             this.DragEnter += OnDragEnter;
             this.DragDrop += OnDragDrop;
             this.FormClosing += OnClosing;
-        }
-
-        private void LayoutCards(Panel body, CardPanel tool, CardPanel list, CardPanel set, CardPanel act, CardPanel log)
-        {
-            int w = body.ClientSize.Width - 32;
-            tool.Width = w;
-            int top = 16;
-            tool.Location = new Point(16, top);
-
-            int setH = 128;
-            int logH = 150;
-            int actH = 124;
-            int gap = 10;
-            int bottom = body.ClientSize.Height - 16;
-
-            // 从底往上: act, log, set
-            act.Location = new Point(16, bottom - actH);
-            act.Size = new Size(w, actH);
-            log.Location = new Point(16, bottom - actH - gap - logH);
-            log.Size = new Size(w, logH);
-            set.Location = new Point(16, bottom - actH - gap - logH - gap - setH);
-            set.Size = new Size(w, setH);
-            txtLog.Location = new Point(14, 12);
-            txtLog.Size = new Size(log.ClientSize.Width - 28, log.ClientSize.Height - 24);
-
-            // 列表填满之间
-            int listTop = top + 58 + 10;
-            int listH = set.Location.Y - gap - listTop;
-            if (listH < 80) listH = 80;
-            list.Location = new Point(16, listTop);
-            list.Size = new Size(w, listH);
-        }
-
-        private static RButton MakeRButton(string text, BtnVariant variant)
-        {
-            RButton b = new RButton();
-            b.Text = text;
-            b.Variant = variant;
-            b.Width = 92;
-            b.Height = 38;
-            b.Padding = new Padding(2);
-            return b;
         }
 
         private static Button MakeButton(string text, int width)

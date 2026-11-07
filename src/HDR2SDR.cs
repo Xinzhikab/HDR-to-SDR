@@ -476,6 +476,7 @@ namespace Hdr2Sdr
 
         public MainForm(string[] args)
         {
+            Mdc.ApplyDark(IsSystemDark());
             _startArgs = args;
             BuildUi();
             this.Load += delegate
@@ -483,6 +484,20 @@ namespace Hdr2Sdr
                 InitFfmpeg(true);
                 if (_startArgs != null && _startArgs.Length > 0) AddPaths(_startArgs);
             };
+        }
+
+        // 读 Windows 注册表检测系统深色模式
+        private static bool IsSystemDark()
+        {
+            try
+            {
+                object v = Microsoft.Win32.Registry.GetValue(
+                    @"HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize",
+                    "AppsUseLightTheme", 1);
+                int i;
+                return int.TryParse(v.ToString(), out i) ? i == 0 : false;
+            }
+            catch { return false; }
         }
 
         // ---------------------------------------------------------- 界面 (Material Design 3)
@@ -504,19 +519,19 @@ namespace Hdr2Sdr
 
             lblTitle = new Label();
             lblTitle.Text = "HDR · 转 SDR";
-            lblTitle.ForeColor = Mdc.OnPrimary;
+            lblTitle.ForeColor = Mdc.OnSurface;
             lblTitle.Font = new Font("Microsoft YaHei UI", 13f, FontStyle.Bold);
             lblTitle.AutoSize = true;
-            lblTitle.Location = new Point(18, 10);
+            lblTitle.Location = new Point(18, 16);
             lblTitle.Height = 28;
             appbar.Controls.Add(lblTitle);
 
             Label lblSub = new Label();
             lblSub.Text = "录屏 HDR10 / HLG → 剪映可用的 SDR";
-            lblSub.ForeColor = Mdc.Blend(Mdc.OnPrimary, Color.FromArgb(140, 255, 255, 255));
+            lblSub.ForeColor = Mdc.OnSurfaceVariant;
             lblSub.Font = new Font("Microsoft YaHei UI", 8.5f);
             lblSub.AutoSize = true;
-            lblSub.Location = new Point(150, 14);
+            lblSub.Location = new Point(150, 21);
             lblSub.Height = 24;
             appbar.Controls.Add(lblSub);
 
@@ -533,8 +548,8 @@ namespace Hdr2Sdr
             toolCard.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             toolCard.Location = new Point(16, 16);
             toolCard.Size = new Size(body.ClientSize.Width - 32, 58);
-            toolCard.Fill = Mdc.SurfaceVariant;
-            toolCard.CornerRadius = 16;
+            toolCard.Variant = CardVariant.Elevated;
+            toolCard.CornerRadius = 14;
 
             btnAddFiles = MakeRButton("＋  添加文件", BtnVariant.Filled);
             btnAddFiles.Location = new Point(16, 10);
@@ -570,8 +585,8 @@ namespace Hdr2Sdr
             listCard.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             listCard.Location = new Point(16, 84);
             listCard.Size = new Size(body.ClientSize.Width - 32, body.ClientSize.Height - 84 - 230);
-            listCard.Fill = Mdc.SurfaceVariant;
-            listCard.CornerRadius = 16;
+            listCard.Variant = CardVariant.Elevated;
+            listCard.CornerRadius = 14;
 
             lv = new BufferedListView();
             lv.Dock = DockStyle.Fill;
@@ -607,8 +622,8 @@ namespace Hdr2Sdr
             setCard.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             setCard.Location = new Point(16, body.ClientSize.Height - 220);
             setCard.Size = new Size(body.ClientSize.Width - 32, 204);
-            setCard.Fill = Mdc.SurfaceVariant;
-            setCard.CornerRadius = 16;
+            setCard.Variant = CardVariant.Elevated;
+            setCard.CornerRadius = 14;
 
             Label sTitle = new Label();
             sTitle.Text = "转换设置";
@@ -703,8 +718,8 @@ namespace Hdr2Sdr
             actCard.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
             actCard.Location = new Point(16, body.ClientSize.Height - 140);
             actCard.Size = new Size(body.ClientSize.Width - 32, 124);
-            actCard.Fill = Mdc.SurfaceVariant;
-            actCard.CornerRadius = 16;
+            actCard.Variant = CardVariant.Elevated;
+            actCard.CornerRadius = 14;
 
             btnStart = MakeRButton("开始转换", BtnVariant.Filled);
             btnStart.Location = new Point(16, 16);
@@ -768,8 +783,8 @@ namespace Hdr2Sdr
             #region 日志卡片
             CardPanel logCard = new CardPanel();
             logCard.Anchor = AnchorStyles.Left | AnchorStyles.Right | AnchorStyles.Bottom;
-            logCard.Fill = Mdc.SurfaceVariant;
-            logCard.CornerRadius = 16;
+            logCard.Variant = CardVariant.Elevated;
+            logCard.CornerRadius = 14;
 
             txtLog = new RichTextBox();
             txtLog.Location = new Point(14, 12);
